@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.avro.Schema;
-import org.apache.avro.file.DataFileStream;
+import org.apache.avro.file.DirectDataFileStream;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -21,11 +21,10 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 public class AvroTest {
     private BlockingQueue<Object> outputQueue;
 
-
     public AvroTest() throws Exception {
         outputQueue = new ArrayBlockingQueue<Object>(2);
-        ProcessBuilder  processBuilder = new ProcessBuilder("python", "stream_test.py");
 
+        ProcessBuilder processBuilder = new ProcessBuilder("python", "stream_test.py");
         Process process = processBuilder.start();
 
         ExecutorService pool = Executors.newFixedThreadPool(3);
@@ -42,30 +41,32 @@ public class AvroTest {
         public AvroWriter(OutputStream outputStream) throws Exception {
             String toPythonSchemaStr = "{\"namespace\": \"example.avro\"," +
                     "\"type\": \"record\"," +
-                    "\"name\": \"Udf\"," +
-                    "\"fields\": [ {\"name\": \"A\", \"type\": \"double\"}," +
-                                  "{\"name\": \"B\", \"type\": \"string\"}]}";
-            toPythonSchema = org.apache.avro.Schema.parse(toPythonSchemaStr);
+                    "\"name\": \"UDF\"," +
+                    "\"fields\": [ {\"name\": \"DBL\", \"type\": \"double\"}," +
+                                  "{\"name\": \"STR\", \"type\": \"string\"}]}";
+
+            toPythonSchema = Schema.parse(toPythonSchemaStr);
             reflectDatumWriter = new ReflectDatumWriter< GenericRecord >(toPythonSchema);
-            writer = new DataFileWriter< GenericRecord >(reflectDatumWriter).create(toPythonSchema, new BufferedOutputStream(outputStream));
+            writer = (new DataFileWriter< GenericRecord >(reflectDatumWriter))
+                     .create(toPythonSchema, new BufferedOutputStream(outputStream));
         }
 
         @Override
         public Boolean call() throws Exception {
-            write(1.0, "One");
-            System.out.println("Out: " + outputQueue.take());
-            write(2.0, "Two");
-            System.out.println("Out: " + outputQueue.take());
-            write(3.0, "Three");
-            System.out.println("Out: " + outputQueue.take());
+            write(1.0, "aardvark");
+            System.out.println("Recieved from Python: " + outputQueue.take());
+            write(2.0, "beryllium");
+            System.out.println("Recieved from Python: " + outputQueue.take());
+            write(3.0, "cerulean");
+            System.out.println("Recieved from Python: " + outputQueue.take());
             return true;
         }
         
-        public void write(Double a, String b) throws IOException {
+        public void write(Double d, String s) throws IOException {
             GenericRecord output = new GenericData.Record(toPythonSchema);
-            output.put("A", a);
-            output.put("B", b);
-
+            output.put("DBL", d);
+            output.put("STR", s);
+            System.out.println("Sent to python: " + output.toString());
             writer.append(output);
             writer.flush();
         }
@@ -74,26 +75,35 @@ public class AvroTest {
     
     public class AvroReader implements Callable<Boolean> {
         private ReflectDatumReader< GenericRecord > reflectDatumReader = null;
-        private DataFileStream< GenericRecord > avroReader = null;
-        private BufferedReader reader;
+        private DirectDataFileStream< GenericRecord > reader = null;
+        private InputStream inputStream;
 
-        
         public AvroReader(InputStream inputStream) throws Exception {
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-            /*
+            this.inputStream = inputStream;
             reflectDatumReader = new ReflectDatumReader< GenericRecord >();
-            avroReader = new DataFileStream<GenericRecord>(inputStream, reflectDatumReader);
-            */
         }
         
         @Override
         public Boolean call() throws Exception {
-            //GenericRecord gr = avroReader.next();
-            String input;
-            while ((input = reader.readLine()) != null) {
-                System.out.println("Val: " + input);
-                outputQueue.put(input);
+            try {
+                // reader reads data as part of its initialization process
+                // so we need to instantiate it here instead of in the AvroReader constructor
+                reader = new DirectDataFileStream< GenericRecord >(inputStream, reflectDatumReader);
+
+                GenericRecord record;
+                while (reader.hasNext()) {
+                    record = reader.next();
+
+                    // DEBUG: verify that proper datatypes are maintained
+                    Double d = (Double) record.get("DBL");
+                    String s = (String) record.get("STR");
+                    
+                    outputQueue.put(record);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            
             return true;
         }
     }
@@ -123,5 +133,4 @@ public class AvroTest {
             e.printStackTrace();
         }
     }
-
 }
