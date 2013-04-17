@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "pseudojson",
+  "fields": [
+    {
+      "name": "value",
+      "type": [
+          "long",
+          "double",
+          "string",
+          "boolean",
+          "null",
+          {"type": "array", "items": "pseudojson"},
+          {"type": "map", "values": "pseudojson"}
+      ]
+    }
+  ]
+}
