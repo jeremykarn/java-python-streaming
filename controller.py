@@ -35,7 +35,7 @@ TURN_ON_OUTPUT_CAPTURING = "CTURN_ON_OUTPUT_CAPTURING|&\n"
 NUM_LINES_OFFSET_TRACE = int(os.environ.get('PYTHON_TRACE_OFFSET', 0))
 
 input_count = 0
-logg = open('old_python', 'w')
+logg = open('old_python.log', 'w')
 
 def log(m):
     logg.write("%s\n" % m)
@@ -53,17 +53,17 @@ def main():
 
     while True:
         try:
-            log("Input: %s" % input)
+            #log("Input: %s" % input)
             inputs = deserialize_input(input)
 
-            log("Inputs: %s" % inputs)
-            func_output = inputs
+            #log("Inputs: %s" % inputs)
+            func_output = inputs[0]
 
-            log("func output: %s" % func_output)
+            #log("func output: %s" % func_output)
             output = serialize_output(func_output)
 
-            log("output: %s" % output)
-            next_input_count_to_log = get_next_input_count_to_log(input_count, next_input_count_to_log)
+            #log("output: %s" % output)
+            #next_input_count_to_log = get_next_input_count_to_log(input_count, next_input_count_to_log)
             stream_output.write( "%s%s" % (output, END_RECORD_DELIM) )
 
         except Exception as e:
@@ -76,6 +76,10 @@ def main():
         sys.stderr.flush()
         stream_output.flush()
         stream_err_output.flush()
+
+        #Need to exit so that the python profile is written out
+        if input_count == 10000:
+            return
 
         input = get_next_input(sys.stdout, sys.stdin)
 
@@ -197,10 +201,11 @@ def _deserialize_collection(input, return_type, si, ei):
     key = None
     pre = None
     mid = None
+    input_len = len(input)
     while index <= ei:
-        if len(input) > 2 and index > si + 1:
+        if input_len > 2 and index > si + 1:
             pre = input[index - 2]
-        if len(input) > 1 and index > si:
+        if input_len > 1 and index > si:
             mid = input[index - 1]
         post = input[index]
 
@@ -299,4 +304,10 @@ def cast_val(val, type, si, ei):
         raise Exception("Invalid type: %s" % type)
 
 if __name__ == '__main__':
+    import cProfile
+    import pstats
+    pr = cProfile.Profile()
+    pr.enable()
     main()
+    pr.disable()
+    pr.dump_stats('old.profile')
