@@ -19,27 +19,22 @@ POST_WRAP_DELIM = '_'
 NULL_BYTE = "-"
 END_RECORD_DELIM = '|&\n'
 
-WRAPPED_FIELD_DELIMITER = PRE_WRAP_DELIM + FIELD_DELIMITER + POST_WRAP_DELIM
-WRAPPED_TUPLE_START = PRE_WRAP_DELIM + TUPLE_START + POST_WRAP_DELIM
-WRAPPED_TUPLE_END = PRE_WRAP_DELIM + TUPLE_END + POST_WRAP_DELIM
-WRAPPED_BAG_START = PRE_WRAP_DELIM + BAG_START + POST_WRAP_DELIM
-WRAPPED_BAG_END = PRE_WRAP_DELIM + BAG_END + POST_WRAP_DELIM
-WRAPPED_MAP_START = PRE_WRAP_DELIM + MAP_START + POST_WRAP_DELIM
-WRAPPED_MAP_END = PRE_WRAP_DELIM + MAP_END + POST_WRAP_DELIM
-WRAPPED_PARAMETER_DELIMITER = PRE_WRAP_DELIM + PARAMETER_DELIMITER + POST_WRAP_DELIM
-WRAPPED_NULL_BYTE = PRE_WRAP_DELIM + NULL_BYTE + POST_WRAP_DELIM
+TYPE_TUPLE = TUPLE_START
+TYPE_BAG = BAG_START
+TYPE_MAP = MAP_START
 
-BAG = 0
-TUPLE = 1
-MAP = 2
-
-TYPE_BOOLEAN = "B"
+TYPE_CHARARRAY = "C"
+TYPE_BYTEARRAY = "A"
 TYPE_INTEGER = "I"
 TYPE_LONG = "L"
 TYPE_FLOAT = "F"
 TYPE_DOUBLE = "D"
-TYPE_BYTEARRAY = "A"
-TYPE_CHARARRAY = "C"
+TYPE_BOOLEAN = "B"
+
+SCALAR_TYPES = set([TYPE_CHARARRAY, TYPE_BYTEARRAY,
+                    TYPE_INTEGER, TYPE_LONG,
+                    TYPE_FLOAT, TYPE_DOUBLE,
+                    TYPE_BOOLEAN])
 
 END_OF_STREAM = TYPE_CHARARRAY + "\x04" + END_RECORD_DELIM
 TURN_ON_OUTPUT_CAPTURING = TYPE_CHARARRAY + "TURN_ON_OUTPUT_CAPTURING" + END_RECORD_DELIM
@@ -184,111 +179,92 @@ def deserialize_input(input):
 
     pd = PRE_WRAP_DELIM + PARAMETER_DELIMITER + POST_WRAP_DELIM
     params = input.split(pd)
-    input_result = []
+    return [_deserialize_input(param, 0, len(param)-1) for param in params]
 
-    for i in range(len(params)):
-        input_result.append(_deserialize_input(params[i], 0, len(params[i]) - 1))
-    return input_result
+def _deserialize_input(input_, si, ei):
+    if ei - si < 1:
+        if ei == si and input_[0] == TYPE_CHARARRAY:
+            return ""
+        else:
+            return None
 
-def _deserialize_input(input, si, ei):
-    if ei >= si + 2 and input[si+1] == NULL_BYTE\
-                    and input[si] == PRE_WRAP_DELIM\
-                    and input[si+2] == POST_WRAP_DELIM:
+    first = input_[si]
+    schema = input_[si+1] if first == PRE_WRAP_DELIM else first
+
+    if schema == NULL_BYTE:
         return None
-    schema = _get_schema(input, si, ei)
-    if schema == 'bag':
-        return _deserialize_collection(input, BAG, si+3, ei-3)
-    elif schema == 'tuple':
-        return _deserialize_collection(input,  TUPLE, si+3, ei-3)
-    elif schema == "map":
-        return _deserialize_collection(input, MAP, si+3, ei-3)
+    elif schema == TYPE_TUPLE or schema == TYPE_MAP or schema == TYPE_BAG:
+        return _deserialize_collection(input_[si+3:ei-2], schema)
+    elif schema == TYPE_CHARARRAY:
+        return unicode(input_[si+1:ei+1], 'utf-8')
+    elif schema == TYPE_BYTEARRAY:
+        return bytearray(input_[si+1:ei+1])
+    elif schema == TYPE_INTEGER:
+        return int(input_[si+1:ei+1])
+    elif schema == TYPE_LONG:
+        return long(input_[si+1:ei+1])
+    elif schema == TYPE_FLOAT or first == TYPE_DOUBLE:
+        return float(input_[si+1:ei+1])
+    elif schema == TYPE_BOOLEAN:
+        return input_[si+1:ei+1] == "true"
     else:
-        return cast_val(input, schema, si+1, ei)
+        raise Exception("Can't determine type of input: %s" % input_[si:ei+1])
 
-def _get_schema(input, si, ei):
-    first = input[si]
-    if first == PRE_WRAP_DELIM:
-        second = input[si+1]
-        if second == BAG_START:
-            return 'bag'
-        elif second == TUPLE_START:
-            return 'tuple'
-        elif second == MAP_START:
-            return 'map'
-        elif second == NULL_BYTE:
-            return 'null'
-    elif first == TYPE_BYTEARRAY:
-        return 'bytearray'
-    elif first == TYPE_BOOLEAN:
-        return 'boolean'
-    elif first == TYPE_CHARARRAY:
-        return 'chararray'
-    elif first == TYPE_DOUBLE:
-        return 'double'
-    elif first == TYPE_FLOAT:
-        return 'float'
-    elif first == TYPE_INTEGER:
-        return 'int'
-    elif first == TYPE_LONG:
-        return 'long'
-    else:
-        raise Exception("Can't determine type of input: %s" % input[si:ei+1])
+def _deserialize_collection(input_, return_type):
+    list_result = []
+    append_to_list_result = list_result.append
+    dict_result = {}
 
+    input_len = len(input_)
+    end_index = input_len - 3
 
-def _deserialize_collection(input, return_type, si, ei):
-    start = si
-    index = si
+    index = 0
+    field_start = 0
     depth = 0
-    result = []
-    field_count = 0
-    res_append = result.append #For Improved Perf
 
     key = None
-    pre = None
-    mid = None
-    input_len = len(input)
-    while index <= ei:
-        if input_len > 2 and index > si + 1:
-            pre = input[index - 2]
-        if input_len > 1 and index > si:
-            mid = input[index - 1]
-        post = input[index]
 
-        if return_type == MAP and post == MAP_KEY and not key:
-            key = unicode(input[start+1:index], 'utf-8')
-            start = index + 1
-
-        if pre == PRE_WRAP_DELIM and post == POST_WRAP_DELIM:
-            if mid == BAG_START or mid == TUPLE_START or mid == MAP_START:
-                depth += 1
-            elif mid == BAG_END or mid == TUPLE_END or mid == MAP_END:
-                depth -= 1
-
-        if depth == 0 and ( index == ei or
-                            ( pre == PRE_WRAP_DELIM and
-                              mid == FIELD_DELIMITER and
-                             post == POST_WRAP_DELIM ) ):
-            if index < ei:
-                end_index = index - 3
+    while True:
+        if index >= end_index:
+            if return_type == TYPE_MAP:
+                dict_result[key] = _deserialize_input(input_, value_start, input_len - 1)
             else:
-                end_index = index
+                append_to_list_result(_deserialize_input(input_, field_start, input_len - 1))
+            break
 
-            if return_type == TUPLE:
-                res_append(_deserialize_input(input, start, end_index))
-            elif return_type == MAP:
-                res_append( (key, _deserialize_input(input, start, end_index)))
+        if return_type == TYPE_MAP and not key:
+            key_index = input_.find(MAP_KEY, index)
+            key = unicode(input_[index+1:key_index], 'utf-8')
+            index = key_index + 1
+            value_start = key_index + 1
+            continue
+
+        if not (input_[index] == PRE_WRAP_DELIM and input_[index+2] == POST_WRAP_DELIM):
+            prewrap_index = input_.find(PRE_WRAP_DELIM, index+1)
+            index = (prewrap_index if prewrap_index != -1 else end_index)
+
+        mid = input_[index+1]
+
+        if mid == BAG_START or mid == TUPLE_START or mid == MAP_START:
+            depth += 1
+        elif mid == BAG_END or mid == TUPLE_END or mid == MAP_END:
+            depth -= 1
+        elif depth == 0 and mid == FIELD_DELIMITER:
+            if return_type == TYPE_MAP:
+                dict_result[key] = _deserialize_input(input_, value_start, index - 1)
                 key = None
             else:
-                res_append(_deserialize_input(input, start, end_index))
-            field_count += 1
-            start = index + 1
-        index += 1
-    if return_type == TUPLE:
-        return tuple(result)
-    elif return_type == MAP:
-        return dict(result)
+                append_to_list_result(_deserialize_input(input_, field_start, index - 1))
+            field_start = index + 3
+        
+        index += 3
+
+    if return_type == TYPE_MAP:
+        return dict_result
+    elif return_type == TYPE_TUPLE:
+        return tuple(list_result)
     else:
-        return result
+        return list_result
 
 def serialize_output(output, utfEncodeAllFields=False):
     """
@@ -297,55 +273,31 @@ def serialize_output(output, utfEncodeAllFields=False):
         for maps so we wouldn't be able to tell which fields were encoded or not.
     """
     output_str = ""
-    output_type = type(output)
+    fd = PRE_WRAP_DELIM + FIELD_DELIMITER + POST_WRAP_DELIM
 
     if output is None:
-        output_str += WRAPPED_NULL_BYTE
-    elif output_type == tuple:
-        output_str += WRAPPED_TUPLE_START
-        output_str += WRAPPED_FIELD_DELIMITER.join([serialize_output(o, utfEncodeAllFields) for o in output])
-        output_str += WRAPPED_TUPLE_END
-    elif output_type == list:
-        output_str += WRAPPED_BAG_START
-        output_str += WRAPPED_FIELD_DELIMITER.join([serialize_output(o, utfEncodeAllFields) for o in output])
-        output_str += WRAPPED_BAG_END
-    elif output_type == dict:
-        output_str += WRAPPED_MAP_START
-        output_str += WRAPPED_FIELD_DELIMITER.join(['%s#%s' % (k.encode('utf-8'), serialize_output(v, True)) for k, v in output.iteritems()])
-        output_str += WRAPPED_MAP_END
-    elif output_type == bool:
+        output_str += PRE_WRAP_DELIM + NULL_BYTE + POST_WRAP_DELIM
+    elif type(output) == tuple:
+        output_str += PRE_WRAP_DELIM + TUPLE_START + POST_WRAP_DELIM
+        output_str += fd.join([serialize_output(o, utfEncodeAllFields) for o in output])
+        output_str += PRE_WRAP_DELIM + TUPLE_END + POST_WRAP_DELIM
+    elif type(output) == list:
+        output_str += PRE_WRAP_DELIM + BAG_START + POST_WRAP_DELIM
+        output_str += fd.join([serialize_output(o, utfEncodeAllFields) for o in output])
+        output_str += PRE_WRAP_DELIM + BAG_END + POST_WRAP_DELIM
+    elif type(output) == dict:
+        output_str += PRE_WRAP_DELIM + MAP_START + POST_WRAP_DELIM
+        output_str += fd.join([ '%s#%s' % (k.encode('utf-8'), serialize_output(v, True)) for k, v in output.iteritems() ])
+        output_str += PRE_WRAP_DELIM + MAP_END + POST_WRAP_DELIM
+    elif type(output) == bool:
         output_str += "1" if output else "0"
-    elif utfEncodeAllFields or output_type == str or output_type == unicode:
+    elif utfEncodeAllFields or isinstance(output, basestring):
         #unicode is necessary in cases where we're encoding non-strings.
         output_str += unicode(output).encode('utf-8')
     else:
         output_str += str(output)
 
     return output_str
-
-def cast_val(val, type, si, ei):
-    """
-    Cast val to the python equivalent of the Pig type type.
-
-    @param val: Input string
-    @param type: pig type of val.
-    """
-    if type == 'chararray':
-        return unicode(val[si:ei+1], 'utf-8')
-    elif type == 'bytearray':
-        return bytearray(val[si:ei+1])
-    elif si > ei or type == 'null':
-        return None
-    elif type == 'long':
-        return long(val[si:ei+1])
-    elif type == 'int':
-        return int(val[si:ei+1])
-    elif type == 'float' or type == 'double':
-        return float(val[si:ei+1])
-    elif type == 'boolean':
-        return val[si:ei+1] == "true"
-    else:
-        raise Exception("Invalid type: %s" % type)
 
 if __name__ == '__main__':
     controller = PythonStreamingController()
