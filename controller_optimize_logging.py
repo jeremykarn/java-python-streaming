@@ -18,6 +18,7 @@ PRE_WRAP_DELIM = '|'
 POST_WRAP_DELIM = '_'
 NULL_BYTE = "-"
 END_RECORD_DELIM = '|&\n'
+END_RECORD_DELIM_LENGTH = len(END_RECORD_DELIM)
 
 BAG = 0
 TUPLE = 1
@@ -64,7 +65,7 @@ class PythonStreamingController:
         logging.basicConfig(filename=log_file_name, format="%(asctime)s %(levelname)s %(message)s", level=mortar_logging.mortar_log_level)
         logging.info("To reduce the amount of information being logged only a small subset of rows are logged at the INFO level.  Call mortar_logging.set_log_level_debug in pig_util to see all rows being processed.")
 
-        input = self.get_next_input()
+        input_ = self.get_next_input()
 
         try:
             func = __import__(module_name, globals(), locals(), [func_name], -1).__dict__[func_name]
@@ -79,30 +80,36 @@ class PythonStreamingController:
         else:
             sys.stdout = self.output_stream
 
-        while True:
+        while input_ != END_OF_STREAM:
+            should_log = (self.input_count == self.next_input_count_to_log or
+                          mortar_logging.mortar_log_level == logging.DEBUG)
+
             try:
-                try:
-                    self.log_message("Row %s: Serialized Input: %s" % (self.input_count, input))
-                    inputs = deserialize_input(input)
+                if should_log:
+                    self.log_message("Row %s: Serialized Input: %s" % (self.input_count, input_))
+                inputs = deserialize_input(input_)
+                if should_log:
                     self.log_message("Row %s: Deserialized Input: %s" % (self.input_count, unicode(inputs)))
-                except:
-                    #Capture errors where the user passes in bad data.
-                    write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
-                    self.close_controller(-3)
+            except:
+                #Capture errors where the user passes in bad data.
+                write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
+                self.close_controller(-3)
 
-                try:
-                    func_output = func(*inputs)
+            try:
+                func_output = func(*inputs)
+                if should_log:
                     self.log_message("Row %s: UDF Output: %s" % (self.input_count, unicode(func_output)))
-                except:
-                    #These errors should always be caused by user code.
-                    write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
-                    self.close_controller(-2)
+            except:
+                #These errors should always be caused by user code.
+                write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
+                self.close_controller(-2)
 
+            try:
                 output = serialize_output(func_output)
-
-                self.log_message("Row %s: Serialized Output: %s" % (self.input_count, output))
-                if self.input_count == self.next_input_count_to_log:
-                    self.update_next_input_count_to_log()
+                if should_log:
+                    self.log_message("Row %s: Serialized Output: %s" % (self.input_count, output))
+                    if self.input_count == self.next_input_count_to_log:
+                        self.update_next_input_count_to_log()
 
                 self.stream_output.write( "%s%s" % (output, END_RECORD_DELIM) )
             except Exception as e:
@@ -111,14 +118,13 @@ class PythonStreamingController:
                 import traceback
                 traceback.print_exc(file=self.stream_error)
                 sys.exit(-3)
+
             sys.stdout.flush()
             sys.stderr.flush()
             self.stream_output.flush()
             self.stream_error.flush()
 
-            input = self.get_next_input()
-            if input == END_OF_STREAM:
-                break
+            input_ = self.get_next_input()
 
     def get_next_input(self):
         input_stream = self.input_stream
@@ -139,7 +145,7 @@ class PythonStreamingController:
 
         self.input_count += 1
 
-        return input[:-len(END_RECORD_DELIM)]
+        return input[:-END_RECORD_DELIM_LENGTH]
 
     def log_message(self, msg):
         if self.input_count == self.next_input_count_to_log:
