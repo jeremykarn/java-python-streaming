@@ -3,7 +3,7 @@ import sys
 import os
 import logging
 
-from pig_util import write_user_exception
+from pig_util import write_user_exception, mortar_logging
 
 FIELD_DELIMITER = ','
 TUPLE_START = '('
@@ -19,119 +19,159 @@ POST_WRAP_DELIM = '_'
 NULL_BYTE = "-"
 END_RECORD_DELIM = '|&\n'
 
-BAG = 0
-TUPLE = 1
-MAP = 2
+TYPE_TUPLE = TUPLE_START
+TYPE_BAG = BAG_START
+TYPE_MAP = MAP_START
 
-TYPE_BOOLEAN = "B"
+TYPE_CHARARRAY = "C"
+TYPE_BYTEARRAY = "A"
 TYPE_INTEGER = "I"
 TYPE_LONG = "L"
 TYPE_FLOAT = "F"
 TYPE_DOUBLE = "D"
-TYPE_BYTEARRAY = "A"
-TYPE_CHARARRAY = "C"
+TYPE_BOOLEAN = "B"
 
-TURN_ON_OUTPUT_CAPTURING = "CTURN_ON_OUTPUT_CAPTURING|&\n"
+SCALAR_TYPES = set([TYPE_CHARARRAY, TYPE_BYTEARRAY,
+                    TYPE_INTEGER, TYPE_LONG,
+                    TYPE_FLOAT, TYPE_DOUBLE,
+                    TYPE_BOOLEAN])
+
+END_OF_STREAM = TYPE_CHARARRAY + "\x04" + END_RECORD_DELIM
+TURN_ON_OUTPUT_CAPTURING = TYPE_CHARARRAY + "TURN_ON_OUTPUT_CAPTURING" + END_RECORD_DELIM
 NUM_LINES_OFFSET_TRACE = int(os.environ.get('PYTHON_TRACE_OFFSET', 0))
 
-input_count = 0
-logg = open('old_python.log', 'w')
+class PythonStreamingController:
+    def __init__(self, profiling_mode=False):
+        self.profiling_mode = profiling_mode
 
-def log(m):
-    logg.write("%s\n" % m)
-    logg.flush()
+        self.input_count = 0
+        self.next_input_count_to_log = 1
 
-def main():
-    log("Start")
-    #Need to ensure that user functions can't write to the streams we use to
-    #communicate with pig.
-    stream_output = os.fdopen(sys.stdout.fileno(), 'wb', 0)
-    stream_err_output = os.fdopen(sys.stderr.fileno(), 'wb', 0)
+    def main(self,
+             module_name, file_path, func_name, cache_path,
+             output_stream_path, error_stream_path, log_file_name, is_illustrate_str):
+        sys.stdin = os.fdopen(sys.stdin.fileno(), 'rb', 0)
 
-    input = get_next_input(sys.stdout, sys.stdin)
-    next_input_count_to_log = 1
+        #Need to ensure that user functions can't write to the streams we use to
+        #communicate with pig.
+        self.stream_output = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+        self.stream_error = os.fdopen(sys.stderr.fileno(), 'wb', 0)
 
-    while True:
+        self.input_stream = sys.stdin
+        self.output_stream = open(output_stream_path, 'a')
+        sys.stderr = open(error_stream_path, 'w')
+        is_illustrate = is_illustrate_str == "true"
+
+        sys.path.append(file_path)
+        sys.path.append(cache_path)
+        sys.path.append('.')
+
+        logging.basicConfig(filename=log_file_name, format="%(asctime)s %(levelname)s %(message)s", level=mortar_logging.mortar_log_level)
+        logging.info("To reduce the amount of information being logged only a small subset of rows are logged at the INFO level.  Call mortar_logging.set_log_level_debug in pig_util to see all rows being processed.")
+
+        input = self.get_next_input()
+
         try:
-            #log("Input: %s" % input)
-            inputs = deserialize_input(input)
+            func = __import__(module_name, globals(), locals(), [func_name], -1).__dict__[func_name]
+        except:
+            #These errors should always be caused by user code.
+            write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
+            self.close_controller(-1)
 
-            #log("Inputs: %s" % inputs)
-            func_output = inputs[0]
+        if is_illustrate or mortar_logging.mortar_log_level != logging.DEBUG:
+            #Only log output for illustrate after we get the flag to capture output.
+            sys.stdout = open("/dev/null", 'w')
+        else:
+            sys.stdout = self.output_stream
 
-            #log("func output: %s" % func_output)
-            output = serialize_output(func_output)
+        while True:
+            try:
+                try:
+                    self.log_message("Row %s: Serialized Input: %s" % (self.input_count, input))
+                    inputs = deserialize_input(input)
+                    self.log_message("Row %s: Deserialized Input: %s" % (self.input_count, unicode(inputs)))
+                except:
+                    #Capture errors where the user passes in bad data.
+                    write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
+                    self.close_controller(-3)
 
-            #log("output: %s" % output)
-            #next_input_count_to_log = get_next_input_count_to_log(input_count, next_input_count_to_log)
-            stream_output.write( "%s%s" % (output, END_RECORD_DELIM) )
+                try:
+                    func_output = func(*inputs)
+                    self.log_message("Row %s: UDF Output: %s" % (self.input_count, unicode(func_output)))
+                except:
+                    #These errors should always be caused by user code.
+                    write_user_exception(module_name, self.stream_error, NUM_LINES_OFFSET_TRACE)
+                    self.close_controller(-2)
 
-        except Exception as e:
-            #This should only catch internal exceptions with the controller
-            #and pig- not with user code.
-            import traceback
-            traceback.print_exc(file=stream_err_output)
-            sys.exit(-3)
-        sys.stdout.flush()
-        sys.stderr.flush()
-        stream_output.flush()
-        stream_err_output.flush()
+                output = serialize_output(func_output)
 
-        #Need to exit so that the python profile is written out
-        if input_count == 10000:
-            return
+                self.log_message("Row %s: Serialized Output: %s" % (self.input_count, output))
+                if self.input_count == self.next_input_count_to_log:
+                    self.update_next_input_count_to_log()
 
-        input = get_next_input(sys.stdout, sys.stdin)
+                self.stream_output.write( "%s%s" % (output, END_RECORD_DELIM) )
+            except Exception as e:
+                #This should only catch internal exceptions with the controller
+                #and pig- not with user code.
+                import traceback
+                traceback.print_exc(file=self.stream_error)
+                sys.exit(-3)
+            sys.stdout.flush()
+            sys.stderr.flush()
+            self.stream_output.flush()
+            self.stream_error.flush()
 
-def get_next_input(output_stream, input_stream):
-    """
-    TODO: It's really ugly that we pass the output_stream to this function just in case we happen to get
-    the capture output flag and that we have the global input_count.  It's probably time we refactor a lot
-    of this file into a sensible class with appropriate member variables.
-    """
-    global input_count
-    input = input_stream.readline()
+            input = self.get_next_input()
+            if input == END_OF_STREAM:
+                break
 
-    while input.endswith(END_RECORD_DELIM) == False:
-    	input += input_stream.readline()
+    def get_next_input(self):
+        input_stream = self.input_stream
+        output_stream = self.output_stream
 
-    if input == TURN_ON_OUTPUT_CAPTURING:
-        logging.debug("Turned on Output Capturing")
-        sys.stdout = output_stream
-        return get_next_input(output_stream, input_stream)
-    input_count += 1
+        input = input_stream.readline()
 
-    return input[:-len(END_RECORD_DELIM)]
+        while input.endswith(END_RECORD_DELIM) == False:
+            input += input_stream.readline()
 
+        if input == TURN_ON_OUTPUT_CAPTURING:
+            logging.debug("Turned on Output Capturing")
+            sys.stdout = output_stream
+            return get_next_input(output_stream, input_stream)
 
-def log_message(msg, input_count, next_input_count_to_log):
-    if input_count == next_input_count_to_log:
-        logging.info(msg)
-    else:
-        logging.debug(msg)
+        if input == END_OF_STREAM:
+            return input
 
-def get_next_input_count_to_log(input_count, next_input_count_to_log):
-    """
-    Want to log enough rows that you can see progress being made and see timings without wasting time logging thousands of rows.
-    Show first 10 rows, and then the first 5 rows of every order of magnitude (10-15, 100-105, 1000-1005, ...)
-    """
-    if input_count != next_input_count_to_log:
-        return next_input_count_to_log
-    elif next_input_count_to_log < 10:
-        return next_input_count_to_log + 1
-    elif next_input_count_to_log % 10 == 5:
-        return (next_input_count_to_log - 5) * 10
-    else:
-        return next_input_count_to_log + 1
+        self.input_count += 1
 
-def close_controller(exit_code, stream_output, stream_err):
-    sys.stderr.close()
-    stream_err.write("\n")
-    stream_err.close()
-    sys.stdout.close()
-    stream_output.write("\n")
-    stream_output.close()
-    sys.exit(exit_code)
+        return input[:-len(END_RECORD_DELIM)]
+
+    def log_message(self, msg):
+        if self.input_count == self.next_input_count_to_log:
+            logging.info(msg)
+        else:
+            logging.debug(msg)
+
+    def update_next_input_count_to_log(self):
+        """
+        Want to log enough rows that you can see progress being made and see timings without wasting time logging thousands of rows.
+        Show first 10 rows, and then the first 5 rows of every order of magnitude (10-15, 100-105, 1000-1005, ...)
+        """
+        if self.next_input_count_to_log < 10:
+            self.next_input_count_to_log = self.next_input_count_to_log + 1
+        elif self.next_input_count_to_log % 10 == 5:
+            self.next_input_count_to_log = (self.next_input_count_to_log - 5) * 10
+        else:
+            self.next_input_count_to_log = self.next_input_count_to_log + 1
+
+    def close_controller(self, exit_code):
+        sys.stderr.close()
+        self.stream_error.write("\n")
+        self.stream_error.close()
+        sys.stdout.close()
+        self.stream_output.write("\n")
+        self.stream_output.close()
+        sys.exit(exit_code)
 
 def deserialize_input(input):
     if len(input) == 0:
@@ -145,106 +185,90 @@ def deserialize_input(input):
         input_result.append(_deserialize_input(params[i], 0, len(params[i]) - 1))
     return input_result
 
-def _deserialize_input(input, si, ei):
-    if ei >= si + 2 and input[si+1] == NULL_BYTE\
-                    and input[si] == PRE_WRAP_DELIM\
-                    and input[si+2] == POST_WRAP_DELIM:
+def _deserialize_input(input_, si, ei):
+    if ei - si < 1:
+        if ei == si and input_[0] == TYPE_CHARARRAY:
+            return ""
+        else:
+            return None
+
+    first = input_[si]
+    schema = input_[si+1] if first == PRE_WRAP_DELIM else first
+
+    if schema == NULL_BYTE:
         return None
-    schema = _get_schema(input, si, ei)
-    if schema == 'bag':
-        return _deserialize_collection(input, BAG, si+3, ei-3)
-    elif schema == 'tuple':
-        return _deserialize_collection(input,  TUPLE, si+3, ei-3)
-    elif schema == "map":
-        return _deserialize_collection(input, MAP, si+3, ei-3)
+    elif schema == TYPE_TUPLE or schema == TYPE_MAP or schema == TYPE_BAG:
+        return _deserialize_collection(input_[si+3:ei-2], schema)
+    elif schema == TYPE_CHARARRAY:
+        return unicode(input_[si+1:ei+1], 'utf-8')
+    elif schema == TYPE_BYTEARRAY:
+        return bytearray(input_[si+1:ei+1])
+    elif schema == TYPE_INTEGER:
+        return int(input_[si+1:ei+1])
+    elif schema == TYPE_LONG:
+        return long(input_[si+1:ei+1])
+    elif schema == TYPE_FLOAT or first == TYPE_DOUBLE:
+        return float(input_[si+1:ei+1])
+    elif schema == TYPE_BOOLEAN:
+        return input_[si+1:ei+1] == "true"
     else:
-        return cast_val(input, schema, si+1, ei)
+        raise Exception("Can't determine type of input: %s" % input_[si:ei+1])
 
-def _get_schema(input, si, ei):
-    first = input[si]
-    if first == PRE_WRAP_DELIM:
-        second = input[si+1]
-        if second == BAG_START:
-            return 'bag'
-        elif second == TUPLE_START:
-            return 'tuple'
-        elif second == MAP_START:
-            return 'map'
-        elif second == NULL_BYTE:
-            return 'null'
-    elif first == TYPE_BYTEARRAY:
-        return 'bytearray'
-    elif first == TYPE_BOOLEAN:
-        return 'boolean'
-    elif first == TYPE_CHARARRAY:
-        return 'chararray'
-    elif first == TYPE_DOUBLE:
-        return 'double'
-    elif first == TYPE_FLOAT:
-        return 'float'
-    elif first == TYPE_INTEGER:
-        return 'int'
-    elif first == TYPE_LONG:
-        return 'long'
-    else:
-        raise Exception("Can't determine type of input: %s" % input[si:ei+1])
+def _deserialize_collection(input_, return_type):
+    list_result = []
+    append_to_list_result = list_result.append
+    dict_result = {}
 
+    input_len = len(input_)
+    end_index = input_len - 3
 
-def _deserialize_collection(input, return_type, si, ei):
-    start = si
-    index = si
+    index = 0
+    field_start = 0
     depth = 0
-    result = []
-    field_count = 0
-    res_append = result.append #For Improved Perf
 
     key = None
-    pre = None
-    mid = None
-    input_len = len(input)
-    while index <= ei:
-        if input_len > 2 and index > si + 1:
-            pre = input[index - 2]
-        if input_len > 1 and index > si:
-            mid = input[index - 1]
-        post = input[index]
 
-        if return_type == MAP and post == MAP_KEY and not key:
-            key = unicode(input[start+1:index], 'utf-8')
-            start = index + 1
-
-        if pre == PRE_WRAP_DELIM and post == POST_WRAP_DELIM:
-            if mid == BAG_START or mid == TUPLE_START or mid == MAP_START:
-                depth += 1
-            elif mid == BAG_END or mid == TUPLE_END or mid == MAP_END:
-                depth -= 1
-
-        if depth == 0 and ( index == ei or
-                            ( pre == PRE_WRAP_DELIM and
-                              mid == FIELD_DELIMITER and
-                             post == POST_WRAP_DELIM ) ):
-            if index < ei:
-                end_index = index - 3
+    while True:
+        if index >= end_index:
+            if return_type == TYPE_MAP:
+                dict_result[key] = _deserialize_input(input_, value_start, input_len - 1)
             else:
-                end_index = index
+                append_to_list_result(_deserialize_input(input_, field_start, input_len - 1))
+            break
 
-            if return_type == TUPLE:
-                res_append(_deserialize_input(input, start, end_index))
-            elif return_type == MAP:
-                res_append( (key, _deserialize_input(input, start, end_index)))
+        if return_type == TYPE_MAP and not key:
+            key_index = input_.find(MAP_KEY, index)
+            key = unicode(input_[index+1:key_index], 'utf-8')
+            index = key_index + 1
+            value_start = key_index + 1
+            continue
+
+        if not (input_[index] == PRE_WRAP_DELIM and input_[index+2] == POST_WRAP_DELIM):
+            prewrap_index = input_.find(PRE_WRAP_DELIM, index+1)
+            index = (prewrap_index if prewrap_index != -1 else end_index)
+
+        mid = input_[index+1]
+
+        if mid == BAG_START or mid == TUPLE_START or mid == MAP_START:
+            depth += 1
+        elif mid == BAG_END or mid == TUPLE_END or mid == MAP_END:
+            depth -= 1
+        elif depth == 0 and mid == FIELD_DELIMITER:
+            if return_type == TYPE_MAP:
+                dict_result[key] = _deserialize_input(input_, value_start, index - 1)
                 key = None
             else:
-                res_append(_deserialize_input(input, start, end_index))
-            field_count += 1
-            start = index + 1
-        index += 1
-    if return_type == TUPLE:
-        return tuple(result)
-    elif return_type == MAP:
-        return dict(result)
-    else:
-        return result
+                append_to_list_result(_deserialize_input(input_, field_start, index - 1))
+            field_start = index + 3
+        
+        index += 3
 
+    if return_type == TYPE_MAP:
+        return dict_result
+    elif return_type == TYPE_TUPLE:
+        return tuple(list_result)
+    else:
+        return list_result
 
 def serialize_output(output, utfEncodeAllFields=False):
     """
@@ -279,35 +303,7 @@ def serialize_output(output, utfEncodeAllFields=False):
 
     return output_str
 
-def cast_val(val, type, si, ei):
-    """
-    Cast val to the python equivalent of the Pig type type.
-
-    @param val: Input string
-    @param type: pig type of val.
-    """
-    if type == 'chararray':
-        return unicode(val[si:ei+1], 'utf-8')
-    elif type == 'bytearray':
-        return bytearray(val[si:ei+1])
-    elif si > ei or type == 'null':
-        return None
-    elif type == 'long':
-        return long(val[si:ei+1])
-    elif type == 'int':
-        return int(val[si:ei+1])
-    elif type == 'float' or type == 'double':
-        return float(val[si:ei+1])
-    elif type == 'boolean':
-        return val[si:ei+1] == "true"
-    else:
-        raise Exception("Invalid type: %s" % type)
-
 if __name__ == '__main__':
-    import cProfile
-    import pstats
-    pr = cProfile.Profile()
-    pr.enable()
-    main()
-    pr.disable()
-    pr.dump_stats('old.profile')
+    controller = PythonStreamingController()
+    controller.main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+                    sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
