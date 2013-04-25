@@ -21,7 +21,7 @@ open(log, 'w').close()
 pr = cProfile.Profile()
 pr.enable()
 
-controller = PythonStreamingController(profiling_mode=True)
+controller = PythonStreamingController()
 controller.main(module_name="fake_udfs",
                 file_path="fake_udfs.py",
                 func_name="wrap_args",

@@ -1,282 +1,235 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 import unittest
 import controller
 import StringIO
 import sys
 
-class TestDeserializer( unittest.TestCase ):
-    def test__no_params(self):
-        input = ""
-        expected_output = []
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+class TestDeserializer(unittest.TestCase):
+    def _test_deserialize(self, input_str, expected_output):
+        self.assertEquals(controller.deserialize_input(input_str), expected_output)
 
-    def test__long(self):
-        input = "L970916083725"
-        expected_output = [970916083725L]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_no_params(self):
+        self._test_deserialize("", [])
 
-    def test__empty_long(self):
-        input = "L"
-        expected_output = [None]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_null_byte(self):
+        self._test_deserialize("\x16", [None])
 
-    def test__chararray(self):
-        input = "C1234"
-        expected_output = ["1234"]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_empty_charrarray(self):
+        self._test_deserialize("C", [""])
 
-    def test__empty_chararray(self):
-        input = "C"
-        expected_output = [""]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_chararray(self):
+        self._test_deserialize("Camber", ["amber"])
 
-    def test__null_chararray(self):
-        input = "|-_"
-        expected_output = [None]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_unicode_chararray(self):
+        self._test_deserialize("Cಠ_ಠ", ["ಠ_ಠ"])
 
-    def test__two_elements(self):
-        input = "C032550737A79C543|\t_I970916083725"
-        expected_output = [ "032550737A79C543", 970916083725 ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_bytearray(self):
+        self._test_deserialize("Aamber", [bytearray(b"amber")])
 
-    def test__three_elements_one_null(self):
-        input = "C032550737A79C543|\t_I970916083725|\t_|-_"
-        expected_output = [ "032550737A79C543", 970916083725, None ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_int(self):
+        self._test_deserialize("I11235", [11235])
 
-    def test__bag(self):
-        input = "|{_|(_C79C543|,_I9709|,_Crichard keith|)_|,_|(_C79C543|,_I97091|,_Cmicrosoft works|)_|,_|(_C79C543|,_I970|,_Csearch engines|)_|}_"
-        expected_output = [ [ ("79C543", 9709, "richard keith"),
-                              ("79C543", 97091, "microsoft works"),
-                              ("79C543", 970, "search engines") ] ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_empty_int(self):
+        self._test_deserialize("I", [None])
 
-    def test__two_elements_bags(self):
-        input = "|{_|(_C79C543|,_D97091608|,_Crichard keith frazine|)_|,_|(_C79C543|,_D97091609|,_Cmicrosoft works|)_|}_|\t_|{_|(_C79C543|,_D97091608|)_|,_|(_C79C543|,_D9709160|)_|}_"
-        expected_output =  [[("79C543",float(97091608),"richard keith frazine"),
-                             ("79C543", float(97091609), "microsoft works") ],
-                            [("79C543", float(97091608)),
-                             ("79C543", float(9709160))]]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_long(self):
+        self._test_deserialize("L11235813213455", [11235813213455L])
 
-    def test__atomic_mixed_with_complex(self):
-        input = "|{_|(_C79C543|,_L970916083725|,_Crichard keith frazine|)_|,_|(_C79C543|,_L970916095254|,_Cmicrosoft works|)_|}_|\t_I323|\t_|{_|(_C79C543|,_L970916083725|,_Crichard keith frazine|)_|,_|(_C79C543|,_L970916095254|,_Cmicrosoft works|)_|}_"
-        expected_output = [ [ ("79C543", 970916083725, "richard keith frazine"),
-                              ("79C543", 970916095254, "microsoft works") ],
-                            323,
-                            [ ("79C543", 970916083725, "richard keith frazine"),
-                              ("79C543", 970916095254, "microsoft works") ] ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_float(self):
+        self._test_deserialize("F3.1415", [3.1415])
 
-    def test__short_tuple(self):
-        input = "|(_I1|)_"
-        expected_output = [ (1,) ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_double(self):
+        self._test_deserialize("D3.14159265359", [3.14159265359])
 
-    def test__nested_tuple(self):
-        input = "|(_|(_I123|,_Cabc|)_|,_|(_Cdef|,_I456|)_|)_"
-        expected_output = [ ( (123, "abc"), ("def", 456) ) ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_boolean_true(self):
+        self._test_deserialize("Btrue", [True])
 
-    def test__map(self):
-        input = "|[_Cname#CJohn|,_Cext#I5555|]_"
-        expected_output = [ {"name":u"John",
-                             "ext":5555} ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_boolean_false(self):
+        self._test_deserialize("Bfalse", [False])
 
-    def test__short_field_map(self):
-        input = "|[_Cn#CJohn|,_Ce#C5555|]_"
-        expected_output = [ {"n":u"John",
-                             "e":u"5555"} ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_two_params(self):
+        self._test_deserialize("Cabc\x1DI123", ["abc", 123])
 
-    def test__complex_map(self):
-        input = "|[_CD#|[_CA#I1|,_CB#CE|]_|,_CC#CF|]_"
-        expected_output = [ { u"D": { u"A": 1,
-                                     u"B": u"E"
-                                   },
-                              u"C": u"F"
-                            } ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_three_params_one_null(self):
+        self._test_deserialize("Cabc\x1D\x16\x1DI123", ["abc", None, 123])
 
-    def test__all_types(self):
-        input = "A123|\t_Btrue|\t_Cabc|\t_D4.0|\t_F5.0|\t_I32|\t_L45"
-        expected_output = [ b"123", True, u"abc", 4.0, 5.0, 32, 45L ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_empty_tuple(self):
+        self._test_deserialize("\x11\x12", [()])
 
-    def test__bad_types(self):
-        input = "K123"
-        self.assertRaises(Exception, controller.deserialize_input, [input])
+    def test_tuple(self):
+        self._test_deserialize("\x11Camber\x1FCberyl\x1FCchrysoprase\x12",
+                               [("amber", "beryl", "chrysoprase")])
 
-    def test__error(self):
-        self.maxDiff = None
-        input = "|[_Cspec#|{_|(_|[_Croles#|{_|(_Chadoop-namenode|)_|,_|(_Chadoop-jobtracker|)_|,_|(_Cpig-master|)_|}_|,_Cnum_instances#I1|]_|)_|,_|(_|[_Croles#|{_|(_Chadoop-datanode|)_|,_|(_Chadoop-tasktracker|)_|}_|,_Cnum_instances#I1|]_|)_|}_|,_Chardware#Cm1.large|,_Caccount_id#I1234567|,_Clocation#Cus-east-1b|,_Cstatus#Cdestroyed|,_Cimage#Cus-east-1/ami-1234|,_Cjclouds_name#Cmhcdevelopment_1234|,_Cinstances#|{_|(_|[_Cprivate_address#C10.10.10.10|,_Croles#|{_|(_Chadoop-datanode|)_|,_|(_Chadoop-tasktracker|)_|}_|,_Cpublic_address#Cec2-10-10-10-10.compute-1.amazonaws.com|,_Cinstance_id#Cus-east-1/i-1234|]_|)_|,_|(_|[_Cprivate_address#C10.10.10.10|,_Croles#|{_|(_Chadoop-namenode|)_|,_|(_Chadoop-jobtracker|)_|,_|(_Cpig-master|)_|}_|,_Cpublic_address#Cec2-10-10-10-10.compute-1.amazonaws.com|,_Cinstance_id#Cus-east-1/i-4321|]_|)_|}_|,_Cstop_timestamp#|-_|,_Cplan_code#Cstandard|,_C_id#I1234567890|,_Crunning_timestamp#|-_|,_Cuser_id#I1234|,_Cstart_timestamp#CTue Oct 25 19:26:18 UTC 2011|]_"
-        expected_output = [ {u'status': u'destroyed',
-                             u'start_timestamp': u'Tue Oct 25 19:26:18 UTC 2011',
-                             u'user_id': 1234,
-                             u'account_id': 1234567,
-                             u'running_timestamp': None,
-                             u'image': u'us-east-1/ami-1234',
-                             u'hardware': u'm1.large',
-                             u'instances': [ ( { u'private_address':u'10.10.10.10',
-                                                 u'roles' : [ ( u'hadoop-datanode', ),
-                                                              ( u'hadoop-tasktracker',) ],
-                                                 u'public_address':u'ec2-10-10-10-10.compute-1.amazonaws.com',
-                                                 u'instance_id':u'us-east-1/i-1234'
-                                               },
-                                             ),
-                                             ( {
-                                                 u'private_address':u'10.10.10.10',
-                                                 u'roles' : [ ( u'hadoop-namenode', ),
-                                                              ( u'hadoop-jobtracker', ),
-                                                              ( u'pig-master', ) ],
-                                                 u'public_address' : u'ec2-10-10-10-10.compute-1.amazonaws.com',
-                                                 u'instance_id' : u'us-east-1/i-4321'
-                                               },
-                                             )
-                                           ],
-                             u'plan_code': u'standard',
-                             u'location': u'us-east-1b',
-                             u'_id': 1234567890,
-                             u'spec': [ ( { u'roles' : [ (u'hadoop-namenode', ),
-                                                         (u'hadoop-jobtracker', ),
-                                                         (u'pig-master', ) ],
-                                            u'num_instances' : 1,
-                                          },
-                                        ),
-                                        ( { u'roles' : [ (u'hadoop-datanode',),
-                                                         (u'hadoop-tasktracker',) ],
-                                            u'num_instances' : 1,
-                                          },
-                                        )
-                                      ],
-                             u'jclouds_name': u'mhcdevelopment_1234',
-                             u'stop_timestamp': None}]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_nested_tuple(self):
+        self._test_deserialize("\x11Camber\x1F\x11\x11Cberyl\x12\x1FCchrysoprase\x12\x1FCdiamond\x12",
+                               [("amber", (("beryl",), "chrysoprase"), "diamond")])
 
-    def test__empty_string(self):
-        input = "C"
-        expected_output = [ "" ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_empty_bag(self):
+        self._test_deserialize("\x13\x14", [[]])
 
-    def test__string_with_hash(self):
-        input = "Cabc#!,|g|,(){}"
-        expected_output = [ "abc#!,|g|,(){}" ]
-        out = controller.deserialize_input(input)
-        self.assertEquals(expected_output, out)
+    def test_bag_of_single_element_tuples(self):
+        self._test_deserialize("\x13\x11Camber\x12\x1F\x11Cberyl\x12\x1F\x11Cchrysoprase\x12\x14",
+                               [[("amber",), ("beryl",), ("chrysoprase",)]])
 
-class TestSerializeOutput( unittest.TestCase ):
-    def test__chararray(self):
-        input = "1234"
-        expected_output = "1234"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_bag_of_two_element_tuples(self):
+        input_str = "\x13\x11Camber\x1FCberyl\x12\x1F\x11Cchrysoprase\x1FCdiamond\x12\x1F\x11Cemerald\x1FCfeldspar\x12\x14"
+        expected_output = [[("amber", "beryl"), ("chrysoprase", "diamond"), ("emerald", "feldspar")]]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__empty_chararray(self):
-        input = ""
-        expected_output = ""
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_bag_of_bags(self):
+        input_str = "\x13\x13\x11Camber\x12\x1F\x11Cberyl\x12\x14\x1F\x13\x11Cchrysoprase\x12\x1F\x11Cdiamond\x12\x14\x14"
+        expected_output = [[[("amber",), ("beryl",)], [("chrysoprase",), ("diamond",)]]]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__null_chararray(self):
-        input = None
-        expected_output = "|-_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_empty_map(self):
+        self._test_deserialize("\x05\x06", [{}])
 
-    def test__num(self):
-        input = 1234
-        expected_output = "1234"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_map(self):
+        input_str = "\x05Camber\x1ACberyl\x1FCchrysoprase\x1ACdiamond\x1FCemerald\x1ACfeldspar\x06"
+        expected_output = [{"amber": "beryl", "chrysoprase": "diamond", "emerald": "feldspar"}]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__bool_true(self):
-        input = True
-        expected_output = "1"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_map_with_null_values(self):
+        self._test_deserialize("\x05Camber\x1A\x16\x1FCberyl\x1ACchrysoprase\x06",
+                               [{"amber": None, "beryl": "chrysoprase"}])
 
-    def test__bool_false(self):
-        input = False
-        expected_output = "0"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_map_to_tuples(self):
+        input_str = "\x05Camber\x1A\x11Cberyl\x1FCchrysoprase\x12\x1FCdiamond\x1A\x11Cemerald\x1FCfeldspar\x12\x06"
+        expected_output = [{"amber": ("beryl", "chrysoprase"), "diamond": ("emerald", "feldspar")}]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__tuple(self):
-        input = (1234, "abc")
-        expected_output = "|(_1234|,_abc|)_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_map_to_maps(self):
+        input_str = "\x05Camber\x1A\x05Cberyl\x1ACchrysoprase\x1FCdiamond\x1ACemerald\x06\x1FCfeldspar\x1A\x05Cgarnet\x1AChematite\x1FCjade\x1ACkornerupine\x06\x06"
+        expected_output = [{"amber": {"beryl": "chrysoprase", "diamond": "emerald"}, "feldspar": {"garnet": "hematite", "jade": "kornerupine"}}]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__short_tuple(self):
-        input = (1,)
-        expected_output = "|(_1|)_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_potluck(self):
+        input_str = "I1\x1D\x11L2\x1F\x05Camber\x1AF1.0\x1FCberyl\x1A\x13\x11Btrue\x12\x1F\x11Bfalse\x12\x1F\x11Achrysoprase\x12\x1F\x11\x16\x12\x14\x06\x1FBfalse\x12\x1DD2.0"
+        expected_output = [1, (2L, {"amber": 1.0, "beryl": [(True,), (False,), (bytearray(b"chrysoprase"),), (None,)]}, False), 2.0]
+        self._test_deserialize(input_str, expected_output)
 
-    def test__bag(self):
-        input = [1234, "abc"]
-        expected_output = "|{_1234|,_abc|}_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_invalid_type(self):
+        input_str = "K123"
+        self.assertRaises(Exception, controller.deserialize_input, [input_str])
 
-    def test__nested_tuple(self):
-        input = [(32,12,'abc'), 32, ['abc', 'def', 'ghi']]
-        expected_output = "|{_|(_32|,_12|,_abc|)_|,_32|,_|{_abc|,_def|,_ghi|}_|}_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+class TestSerializeOutput(unittest.TestCase):
+    def _test_serialize(self, input_obj, expected_output):
+        self.assertEquals(controller.serialize_output(input_obj), expected_output)
 
-    def test__map(self):
-        input = {'a': 1, 'b':'z'}
-        expected_output = "|[_a#1|,_b#z|]_"
-        out = controller.serialize_output(input)
-        self.assertEquals(expected_output, out)
+    def test_null(self):
+        self._test_serialize(None, "\x16")
 
-class TestReadInput( unittest.TestCase ):
-    def test__multiline_record(self):
-        inputio = StringIO.StringIO()
-        inputio.write('12\n')
-        inputio.write('34\n')
-        inputio.write('5|&\n')
-        inputio.seek(0)
+    def test_empty_charrarray(self):
+        self._test_serialize("", "")
+
+    def test_chararray(self):
+        self._test_serialize("amber", "amber")
+
+    def test_unicode_chararray(self):
+        self._test_serialize("ಠ_ಠ", "ಠ_ಠ".encode("utf-8"))
+
+    def test_bytearray(self):
+        self._test_serialize(bytearray(b"amber"), "amber")
+
+    def test_int(self):
+        self._test_serialize(11235, "11235")
+
+    def test_long(self):
+        self._test_serialize(11235813213455L, "11235813213455")
+
+    def test_float(self):
+        self._test_serialize(3.1415, "3.1415")
+
+    def test_double(self):
+        self._test_serialize(3.14159265359, "3.14159265359")
+
+    def test_boolean_true(self):
+        self._test_serialize(True, "1")
+
+    def test_boolean_false(self):
+        self._test_serialize(False, "0")
+
+    def test_empty_tuple(self):
+        self._test_serialize(tuple(), "\x11\x12")
+
+    def test_tuple(self):
+        self._test_serialize(("amber", "beryl", "chrysoprase"),
+                             "\x11amber\x1Fberyl\x1Fchrysoprase\x12")
+
+    def test_nested_tuple(self):
+        self._test_serialize(("amber", (("beryl",), "chrysoprase"), "diamond"),
+                             "\x11amber\x1F\x11\x11beryl\x12\x1Fchrysoprase\x12\x1Fdiamond\x12")
+
+    def test_empty_bag(self):
+        self._test_serialize([], "\x13\x14")
+
+    def test_bag_of_single_element_tuples(self):
+        self._test_serialize([("amber",), ("beryl",), ("chrysoprase",)],
+                              "\x13\x11amber\x12\x1F\x11beryl\x12\x1F\x11chrysoprase\x12\x14")
+
+    def test_bag_of_two_element_tuples(self):
+        input_obj = [("amber", "beryl"), ("chrysoprase", "diamond"), ("emerald", "feldspar")]
+        expected_output = "\x13\x11amber\x1Fberyl\x12\x1F\x11chrysoprase\x1Fdiamond\x12\x1F\x11emerald\x1Ffeldspar\x12\x14"
+        self._test_serialize(input_obj, expected_output)
+
+    def test_bag_of_bags(self):
+        input_obj = [[("amber",), ("beryl",)], [("chrysoprase",), ("diamond",)]]
+        expected_output = "\x13\x13\x11amber\x12\x1F\x11beryl\x12\x14\x1F\x13\x11chrysoprase\x12\x1F\x11diamond\x12\x14\x14"
+        self._test_serialize(input_obj, expected_output)
+
+    def test_empty_map(self):
+        self._test_serialize({}, "\x05\x06")
+
+    def test_map(self):
+        input_obj = {"amber": "beryl", "chrysoprase": "diamond", "emerald": "feldspar"}
+        expected_output = "\x05amber\x1Aberyl\x1Fchrysoprase\x1Adiamond\x1Femerald\x1Afeldspar\x06"
+        self._test_serialize(input_obj, expected_output)
+
+    def test_map_to_tuples(self):
+        input_obj = {"amber": ("beryl", "chrysoprase"), "diamond": ("emerald", "feldspar")}
+        expected_output = "\x05amber\x1A\x11beryl\x1Fchrysoprase\x12\x1Fdiamond\x1A\x11emerald\x1Ffeldspar\x12\x06"
+        self._test_serialize(input_obj, expected_output)
+
+    def test_map_to_maps(self):
+        input_obj = {"amber": {"beryl": "chrysoprase", "diamond": "emerald"}, "feldspar": {"garnet": "hematite", "jade": "kornerupine"}}
+        expected_output = "\x05amber\x1A\x05beryl\x1Achrysoprase\x1Fdiamond\x1Aemerald\x06\x1Ffeldspar\x1A\x05garnet\x1Ahematite\x1Fjade\x1Akornerupine\x06\x06"
+        self._test_serialize(input_obj, expected_output)
+
+    def test_potluck(self):
+        input_obj = (2L, {"amber": 1.0, "beryl": [(True,), (False,), (bytearray(b"chrysoprase"),), (None,)]}, False)
+        expected_output = "\x112\x1F\x05amber\x1A1.0\x1Fberyl\x1A\x13\x111\x12\x1F\x110\x12\x1F\x11chrysoprase\x12\x1F\x11\x16\x12\x14\x06\x1F0\x12"
+        self._test_serialize(input_obj, expected_output)
+
+class TestReadInput(unittest.TestCase):
+    def test_multiline_record(self):
+        input_io = StringIO.StringIO()
+        input_io.write('12\n')
+        input_io.write('34\n')
+        input_io.write('5\x1E\n')
+        input_io.seek(0)
 
         test_controller = controller.PythonStreamingController()
-        test_controller.input_stream = inputio
+        test_controller.input_stream = input_io
         test_controller.output_stream = sys.stdout
 
         out = test_controller.get_next_input()
         self.assertEquals('12\n34\n5', out)
 
-    def test__complexmultiline_record(self):
-        inputio = StringIO.StringIO()
-        inputio.write('|{_|(_32|,_12|,_a\n')
-        inputio.write('bc|)_|,_32|,_|{_ab\n')
-        inputio.write('c|,_def|,_gh\n')
-        inputio.write('i|}_|}_|&\n')
-        inputio.seek(0)
+    def test_complex_multiline_record(self):
+        input_io = StringIO.StringIO()
+        input_io.write('\x13\x1132,12,a\n')
+        input_io.write('bc\x12,32,\x13ab\n')
+        input_io.write('c,def,gh\n')
+        input_io.write('i\x14\x14\x1E\n')
+        input_io.seek(0)
 
         test_controller = controller.PythonStreamingController()
-        test_controller.input_stream = inputio
+        test_controller.input_stream = input_io
         test_controller.output_stream = sys.stdout
 
         out = test_controller.get_next_input()
-        self.assertEquals('|{_|(_32|,_12|,_a\nbc|)_|,_32|,_|{_ab\nc|,_def|,_gh\ni|}_|}_', out)
+        self.assertEquals('\x13\x1132,12,a\nbc\x12,32,\x13ab\nc,def,gh\ni\x14\x14', out)

@@ -8,25 +8,33 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.pig.builtin.PigStreaming;
+import org.apache.pig.data.BagFactory;
+import org.apache.pig.data.DataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 
 public class GenTestPythonInput {
     private static Random random;
     private static TupleFactory tupleFactory;
+    private static BagFactory bagFactory;
     private static PigStreaming pigStreaming;
     private static int numRecordsPerTestSet;
 
     public static void main(String[] args) {
         random = new Random();
         tupleFactory = TupleFactory.getInstance();
+        bagFactory = BagFactory.getInstance();
         pigStreaming = new PigStreaming();
-        numRecordsPerTestSet = 100000;
+        numRecordsPerTestSet = 100000; // for test cases with large records
+                                       // will actually be a fraction of this
         
         genNumberData();
         genStringData();
+        genLongStringData();
         genShallowMapData();
         genDeepMapData();
+        genEmbeddedTupleData();
+        genBagData();
     }
 
     private static void genNumberData() {
@@ -56,6 +64,34 @@ public class GenTestPythonInput {
                 for (int j = 0; j < 4; j++) {
                     t.set(j, UUID.randomUUID().toString());
                 }
+                fos.write(pigStreaming.serialize(t, true, true));
+            }
+            writeEndOfStreamFlag(fos);
+        } catch (FileNotFoundException fnfe) {
+            System.out.println(fnfe.toString());
+        } catch (IOException ioe) {
+            System.out.println(ioe.toString());
+        }
+    }
+
+    private static void genLongStringData() {
+        try {
+            FileOutputStream fos = getFreshFileOutputStream("data/long_string_data.txt");
+            for (int i = 0; i < numRecordsPerTestSet / 8; i++) {
+                Tuple t = tupleFactory.newTuple(2);
+
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < 25; j++) {
+                    sb.append(UUID.randomUUID().toString());
+                }
+                t.set(0, sb.toString());
+
+                sb = new StringBuilder();
+                for (int j = 0; j < 25; j++) {
+                    sb.append(UUID.randomUUID().toString());
+                }
+                t.set(1, sb.toString());
+
                 fos.write(pigStreaming.serialize(t, true, true));
             }
             writeEndOfStreamFlag(fos);
@@ -116,6 +152,46 @@ public class GenTestPythonInput {
 
                 Tuple t = tupleFactory.newTuple(deepMap);
                 fos.write(pigStreaming.serialize(t, true, true));
+            }
+            writeEndOfStreamFlag(fos);
+        } catch (FileNotFoundException fnfe) {
+            System.out.println(fnfe.toString());
+        } catch (IOException ioe) {
+            System.out.println(ioe.toString());
+        }
+    }
+
+    private static void genEmbeddedTupleData() {
+        try {
+            FileOutputStream fos = getFreshFileOutputStream("data/embedded_tuple_data.txt");
+            for (int i = 0; i < numRecordsPerTestSet / 2; i++) {
+                Tuple nested_t = tupleFactory.newTuple(10);
+                for (int j = 0; j < 10; j++) {
+                    nested_t.set(j, new Integer(random.nextInt()));
+                }
+                Tuple t = tupleFactory.newTuple(nested_t);
+                fos.write(pigStreaming.serialize(t, true, true));
+            }
+            writeEndOfStreamFlag(fos);
+        } catch (FileNotFoundException fnfe) {
+            System.out.println(fnfe.toString());
+        } catch (IOException ioe) {
+            System.out.println(ioe.toString());
+        }
+    }
+
+    private static void genBagData() {
+        try {
+            FileOutputStream fos = getFreshFileOutputStream("data/bag_data.txt");
+            for (int i = 0; i < numRecordsPerTestSet / 8; i++) {
+                DataBag bag = bagFactory.newDefaultBag();
+                for (int j = 0; j < 25; j++) {
+                    Tuple t = tupleFactory.newTuple(2);
+                    t.set(0, UUID.randomUUID().toString().substring(0, 8));
+                    t.set(1, new Integer(random.nextInt()));
+                    bag.add(t);
+                }
+                fos.write(pigStreaming.serialize(tupleFactory.newTuple(bag), true, true));
             }
             writeEndOfStreamFlag(fos);
         } catch (FileNotFoundException fnfe) {

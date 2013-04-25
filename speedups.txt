@@ -1,0 +1,9 @@
+Speedups
+
+Numbers:                    62%
+Strings (4x36 char):        34%
+Long Strings (2x900 char):  23%
+Maps (2 levels deep):      243%
+Maps (6 levels deep):      347%
+Tuples (10 elements):      235%
+Bags (25 2-tuples):        271%
