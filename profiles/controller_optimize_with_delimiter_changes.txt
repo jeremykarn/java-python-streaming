@@ -1,0 +1,172 @@
+Wed Apr 24 20:26:57 2013    output/python_streaming_number_data.profile
+
+         3108716 function calls (2708716 primitive calls) in 8.838 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001    5.214    0.000    5.214    0.000 {method 'readline' of 'file' objects}
+500000/100000    0.873    0.000    0.906    0.000 /Users/jpacker/code/java-python-streaming/controller.py:282(serialize_output)
+        1    0.583    0.583    8.838    8.838 /Users/jpacker/code/java-python-streaming/controller.py:56(main)
+   400000    0.568    0.000    0.568    0.000 /Users/jpacker/code/java-python-streaming/controller.py:312(_cast_value)
+   400000    0.424    0.000    0.991    0.000 /Users/jpacker/code/java-python-streaming/controller.py:192(_deserialize_input)
+   100000    0.382    0.000    1.500    0.000 /Users/jpacker/code/java-python-streaming/controller.py:186(deserialize_input)
+   100001    0.231    0.000    5.513    0.000 /Users/jpacker/code/java-python-streaming/controller.py:144(get_next_input)
+   100137    0.222    0.000    0.223    0.000 {method 'write' of 'file' objects}
+   100002    0.082    0.000    0.082    0.000 {method 'split' of 'str' objects}
+   600138    0.057    0.000    0.057    0.000 {len}
+   100002    0.056    0.000    0.056    0.000 {method 'endswith' of 'str' objects}
+   400137    0.053    0.000    0.053    0.000 {method 'flush' of 'file' objects}
+   100000    0.048    0.000    0.048    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+   100002    0.033    0.000    0.033    0.000 {method 'join' of 'str' objects}
+
+Wed Apr 24 20:27:17 2013    output/python_streaming_string_data.profile
+
+         3508716 function calls (3108716 primitive calls) in 15.581 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001   11.830    0.000   11.830    0.000 {method 'readline' of 'file' objects}
+500000/100000    0.855    0.000    1.268    0.000 /Users/jpacker/code/java-python-streaming/controller.py:282(serialize_output)
+        1    0.653    0.653   15.581   15.581 /Users/jpacker/code/java-python-streaming/controller.py:56(main)
+   400000    0.409    0.000    0.692    0.000 /Users/jpacker/code/java-python-streaming/controller.py:192(_deserialize_input)
+   400000    0.379    0.000    0.379    0.000 {method 'encode' of 'unicode' objects}
+   100000    0.369    0.000    1.194    0.000 /Users/jpacker/code/java-python-streaming/controller.py:186(deserialize_input)
+   400000    0.283    0.000    0.283    0.000 /Users/jpacker/code/java-python-streaming/controller.py:312(_cast_value)
+   100001    0.237    0.000   12.137    0.000 /Users/jpacker/code/java-python-streaming/controller.py:144(get_next_input)
+   100137    0.218    0.000    0.219    0.000 {method 'write' of 'file' objects}
+   100002    0.089    0.000    0.089    0.000 {method 'split' of 'str' objects}
+   600138    0.057    0.000    0.057    0.000 {len}
+   100002    0.056    0.000    0.056    0.000 {method 'endswith' of 'str' objects}
+   400137    0.054    0.000    0.054    0.000 {method 'flush' of 'file' objects}
+   100000    0.047    0.000    0.047    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+   100002    0.033    0.000    0.033    0.000 {method 'join' of 'str' objects}
+
+Wed Apr 24 23:39:13 2013    output/python_streaming_long_string_data.profile
+
+         320965 function calls (295965 primitive calls) in 18.044 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    12501   17.472    0.001   17.472    0.001 {method 'readline' of 'file' objects}
+37500/12500    0.143    0.000    0.222    0.000 /Users/jpacker/code/java-python-streaming/controller.py:284(serialize_output)
+        1    0.103    0.103   18.044   18.044 /Users/jpacker/code/java-python-streaming/controller.py:58(main)
+    25000    0.072    0.000    0.072    0.000 {method 'encode' of 'unicode' objects}
+    12501    0.047    0.000   17.532    0.001 /Users/jpacker/code/java-python-streaming/controller.py:146(get_next_input)
+    12500    0.040    0.000    0.115    0.000 /Users/jpacker/code/java-python-streaming/controller.py:188(deserialize_input)
+    12633    0.040    0.000    0.041    0.000 {method 'write' of 'file' objects}
+    25000    0.034    0.000    0.041    0.000 /Users/jpacker/code/java-python-streaming/controller.py:194(_deserialize_input)
+    12502    0.030    0.000    0.030    0.000 {method 'split' of 'str' objects}
+    12502    0.010    0.000    0.010    0.000 {method 'endswith' of 'str' objects}
+    12500    0.010    0.000    0.010    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+    50133    0.009    0.000    0.009    0.000 {method 'flush' of 'file' objects}
+    25000    0.007    0.000    0.007    0.000 /Users/jpacker/code/java-python-streaming/controller.py:314(_cast_value)
+    50134    0.006    0.000    0.006    0.000 {len}
+    12502    0.006    0.000    0.006    0.000 {method 'join' of 'str' objects}
+
+Wed Apr 24 20:27:45 2013    output/python_streaming_shallow_map_data.profile
+
+         6908716 function calls (6208716 primitive calls) in 21.030 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001   10.928    0.000   10.928    0.000 {method 'readline' of 'file' objects}
+   100000    3.590    0.000    4.796    0.000 /Users/jpacker/code/java-python-streaming/controller.py:208(_deserialize_collection)
+800000/100000    2.320    0.000    3.415    0.000 /Users/jpacker/code/java-python-streaming/controller.py:282(serialize_output)
+  1000000    0.951    0.000    0.951    0.000 {method 'encode' of 'unicode' objects}
+        1    0.695    0.695   21.030   21.030 /Users/jpacker/code/java-python-streaming/controller.py:56(main)
+   400000    0.619    0.000    0.619    0.000 /Users/jpacker/code/java-python-streaming/controller.py:312(_cast_value)
+  1200000    0.404    0.000    0.404    0.000 {method 'pop' of 'list' objects}
+   100001    0.263    0.000   11.268    0.000 /Users/jpacker/code/java-python-streaming/controller.py:144(get_next_input)
+   100137    0.252    0.000    0.252    0.000 {method 'write' of 'file' objects}
+   100000    0.212    0.000    5.271    0.000 /Users/jpacker/code/java-python-streaming/controller.py:186(deserialize_input)
+  1200011    0.182    0.000    0.182    0.000 {method 'append' of 'list' objects}
+   100000    0.166    0.000    4.961    0.000 /Users/jpacker/code/java-python-streaming/controller.py:192(_deserialize_input)
+   400002    0.090    0.000    0.090    0.000 {method 'join' of 'str' objects}
+   100002    0.079    0.000    0.079    0.000 {method 'split' of 'str' objects}
+   100000    0.061    0.000    0.061    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+   100002    0.060    0.000    0.060    0.000 {method 'endswith' of 'str' objects}
+   400137    0.058    0.000    0.058    0.000 {method 'flush' of 'file' objects}
+   300000    0.054    0.000    0.054    0.000 {method 'iteritems' of 'dict' objects}
+   300138    0.036    0.000    0.036    0.000 {len}
+
+Wed Apr 24 20:28:10 2013    output/python_streaming_deep_map_data.profile
+
+         8108716 function calls (7408716 primitive calls) in 12.343 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001    4.166    0.000    4.166    0.000 {method 'readline' of 'file' objects}
+   100000    2.767    0.000    3.663    0.000 /Users/jpacker/code/java-python-streaming/controller.py:208(_deserialize_collection)
+800000/100000    2.012    0.000    2.773    0.000 /Users/jpacker/code/java-python-streaming/controller.py:282(serialize_output)
+        1    0.612    0.612   12.343   12.343 /Users/jpacker/code/java-python-streaming/controller.py:56(main)
+   700000    0.577    0.000    0.577    0.000 {method 'encode' of 'unicode' objects}
+  1800000    0.436    0.000    0.436    0.000 {method 'pop' of 'list' objects}
+  1800011    0.284    0.000    0.284    0.000 {method 'append' of 'list' objects}
+   100001    0.244    0.000    4.485    0.000 /Users/jpacker/code/java-python-streaming/controller.py:144(get_next_input)
+   100137    0.235    0.000    0.235    0.000 {method 'write' of 'file' objects}
+   100000    0.202    0.000    4.109    0.000 /Users/jpacker/code/java-python-streaming/controller.py:186(deserialize_input)
+   100000    0.177    0.000    0.177    0.000 /Users/jpacker/code/java-python-streaming/controller.py:312(_cast_value)
+   100000    0.154    0.000    3.817    0.000 /Users/jpacker/code/java-python-streaming/controller.py:192(_deserialize_input)
+   600000    0.102    0.000    0.102    0.000 {method 'iteritems' of 'dict' objects}
+   700002    0.082    0.000    0.082    0.000 {method 'join' of 'str' objects}
+   100002    0.072    0.000    0.072    0.000 {method 'split' of 'str' objects}
+   100000    0.059    0.000    0.059    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+   400137    0.059    0.000    0.059    0.000 {method 'flush' of 'file' objects}
+   100002    0.058    0.000    0.058    0.000 {method 'endswith' of 'str' objects}
+   300138    0.035    0.000    0.035    0.000 {len}
+
+Wed Apr 24 23:41:23 2013    output/python_streaming_embedded_tuple_data.profile
+
+         2708465 function calls (2158465 primitive calls) in 9.017 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    50001    4.828    0.000    4.828    0.000 {method 'readline' of 'file' objects}
+    50000    1.590    0.000    2.436    0.000 /Users/jpacker/code/java-python-streaming/controller.py:210(_deserialize_collection)
+600000/50000    0.846    0.000    0.878    0.000 /Users/jpacker/code/java-python-streaming/controller.py:284(serialize_output)
+   500000    0.687    0.000    0.687    0.000 /Users/jpacker/code/java-python-streaming/controller.py:314(_cast_value)
+        1    0.306    0.306    9.017    9.017 /Users/jpacker/code/java-python-streaming/controller.py:58(main)
+    50001    0.125    0.000    4.988    0.000 /Users/jpacker/code/java-python-streaming/controller.py:146(get_next_input)
+    50133    0.120    0.000    0.120    0.000 {method 'write' of 'file' objects}
+   600011    0.113    0.000    0.113    0.000 {method 'append' of 'list' objects}
+    50000    0.105    0.000    2.665    0.000 /Users/jpacker/code/java-python-streaming/controller.py:188(deserialize_input)
+    50000    0.077    0.000    2.513    0.000 /Users/jpacker/code/java-python-streaming/controller.py:194(_deserialize_input)
+   100000    0.045    0.000    0.045    0.000 {method 'pop' of 'list' objects}
+    50002    0.037    0.000    0.037    0.000 {method 'split' of 'str' objects}
+   100002    0.032    0.000    0.032    0.000 {method 'join' of 'str' objects}
+    50002    0.028    0.000    0.028    0.000 {method 'endswith' of 'str' objects}
+   200133    0.027    0.000    0.027    0.000 {method 'flush' of 'file' objects}
+    50000    0.023    0.000    0.023    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+   150134    0.017    0.000    0.017    0.000 {len}
+
+Wed Apr 24 20:28:25 2013    output/python_streaming_bag_data.profile
+
+         4683465 function calls (3733465 primitive calls) in 11.302 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    12501    5.781    0.000    5.781    0.000 {method 'readline' of 'file' objects}
+    12500    2.336    0.000    3.323    0.000 /Users/jpacker/code/java-python-streaming/controller.py:208(_deserialize_collection)
+962500/12500    1.549    0.000    1.910    0.000 /Users/jpacker/code/java-python-streaming/controller.py:282(serialize_output)
+   625000    0.633    0.000    0.633    0.000 /Users/jpacker/code/java-python-streaming/controller.py:312(_cast_value)
+   312500    0.285    0.000    0.285    0.000 {method 'encode' of 'unicode' objects}
+  1587511    0.178    0.000    0.178    0.000 {method 'append' of 'list' objects}
+   650000    0.175    0.000    0.175    0.000 {method 'pop' of 'list' objects}
+        1    0.109    0.109   11.302   11.302 /Users/jpacker/code/java-python-streaming/controller.py:56(main)
+   337502    0.076    0.000    0.076    0.000 {method 'join' of 'str' objects}
+    12501    0.040    0.000    5.832    0.000 /Users/jpacker/code/java-python-streaming/controller.py:144(get_next_input)
+    12633    0.034    0.000    0.035    0.000 {method 'write' of 'file' objects}
+    12500    0.029    0.000    3.389    0.000 /Users/jpacker/code/java-python-streaming/controller.py:186(deserialize_input)
+    12500    0.021    0.000    3.345    0.000 /Users/jpacker/code/java-python-streaming/controller.py:192(_deserialize_input)
+    12502    0.013    0.000    0.013    0.000 {method 'split' of 'str' objects}
+    12502    0.008    0.000    0.008    0.000 {method 'endswith' of 'str' objects}
+    50133    0.008    0.000    0.008    0.000 {method 'flush' of 'file' objects}
+    12500    0.006    0.000    0.006    0.000 /Users/jpacker/code/java-python-streaming/fake_udfs.py:1(wrap_args)
+    37634    0.005    0.000    0.005    0.000 {len}

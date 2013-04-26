@@ -1,8 +1,9 @@
-To profile Python streaming (can substitute number\_data with any of the test datasets created):
+To profile Python streaming (it will take ~5 minutes):
 
-    ./compilejava.sh
-    ./gen_test_data.sh
-    ./python_streaming_profiler.sh data/number_data.txt
-    ./print_profile output/python_streaming_number_data.profile
+    scripts/compile_java.sh
+    scripts/gen_test_data.sh
+    scripts/profile_all_test_cases.sh profiles/my_changes_profile.txt
 
-Remember to put the proper pig-withouthadoop.jar into lib depending on if you're profiling old code or new code.
+To run unit-tests:
+
+    nosetests scripts/test_controller.py

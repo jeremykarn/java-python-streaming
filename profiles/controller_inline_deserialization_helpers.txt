@@ -1,0 +1,208 @@
+Fri Apr 26 12:13:02 2013    output/python_streaming_number_data.profile
+
+         5508036 function calls (5108036 primitive calls) in 13.218 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001    5.749    0.000    5.749    0.000 {method 'readline' of 'file' objects}
+        1    2.223    2.223   13.218   13.218 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+500000/100000    1.375    0.000    1.594    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+   400000    0.914    0.000    0.914    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+   399864    0.423    0.000    1.105    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+   100000    0.412    0.000    1.479    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+   400000    0.341    0.000    1.458    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   100137    0.272    0.000    0.273    0.000 {method 'write' of 'file' objects}
+   400001    0.259    0.000    0.419    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+   100001    0.250    0.000    6.075    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+   399864    0.209    0.000    0.627    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+   400280    0.182    0.000    0.182    0.000 {isinstance}
+   400001    0.160    0.000    0.160    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+  1000002    0.119    0.000    0.119    0.000 {len}
+   100002    0.102    0.000    0.102    0.000 {method 'split' of 'str' objects}
+   100002    0.063    0.000    0.063    0.000 {method 'endswith' of 'str' objects}
+   100000    0.059    0.000    0.059    0.000 /Users/jpacker/code/java-python-streaming/scripts/fake_udfs.py:1(wrap_args)
+   400137    0.059    0.000    0.059    0.000 {method 'flush' of 'file' objects}
+
+Fri Apr 26 12:13:22 2013    output/python_streaming_string_data.profile
+
+         5908036 function calls (5508036 primitive calls) in 19.741 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001   12.361    0.000   12.361    0.000 {method 'readline' of 'file' objects}
+        1    2.145    2.145   19.741   19.741 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+500000/100000    1.346    0.000    1.954    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+   400000    0.584    0.000    0.584    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+   399864    0.441    0.000    1.117    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+   400000    0.425    0.000    0.425    0.000 {method 'encode' of 'unicode' objects}
+   100000    0.391    0.000    1.115    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+   400000    0.342    0.000    1.470    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   400001    0.265    0.000    0.423    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+   100001    0.262    0.000   12.694    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+   100137    0.245    0.000    0.245    0.000 {method 'write' of 'file' objects}
+   399864    0.205    0.000    0.628    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+   400001    0.158    0.000    0.158    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+   400280    0.150    0.000    0.150    0.000 {isinstance}
+  1000002    0.111    0.000    0.111    0.000 {len}
+   100002    0.093    0.000    0.093    0.000 {method 'split' of 'str' objects}
+   100000    0.060    0.000    0.060    0.000 /Users/jpacker/code/java-python-streaming/scripts/fake_udfs.py:1(wrap_args)
+   400137    0.059    0.000    0.059    0.000 {method 'flush' of 'file' objects}
+
+Fri Apr 26 12:13:40 2013    output/python_streaming_long_string_data.profile
+
+         620305 function calls (595305 primitive calls) in 18.343 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    12501   17.060    0.001   17.060    0.001 {method 'readline' of 'file' objects}
+        1    0.598    0.598   18.343   18.343 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+37500/12500    0.116    0.000    0.204    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+    25000    0.106    0.000    0.106    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+    25000    0.070    0.000    0.070    0.000 {method 'encode' of 'unicode' objects}
+    49868    0.055    0.000    0.144    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+    50000    0.045    0.000    0.202    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+    12501    0.043    0.000   17.115    0.001 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+    12633    0.041    0.000    0.041    0.000 {method 'write' of 'file' objects}
+    12500    0.038    0.000    0.168    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+    50001    0.034    0.000    0.055    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+    49868    0.026    0.000    0.081    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+    50001    0.021    0.000    0.021    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+    12502    0.020    0.000    0.020    0.000 {method 'split' of 'str' objects}
+   100002    0.014    0.000    0.014    0.000 {len}
+    25272    0.012    0.000    0.012    0.000 {isinstance}
+    12502    0.010    0.000    0.010    0.000 {method 'endswith' of 'str' objects}
+    50133    0.008    0.000    0.008    0.000 {method 'flush' of 'file' objects}
+
+Fri Apr 26 12:14:06 2013    output/python_streaming_shallow_map_data.profile
+
+         9008036 function calls (7508036 primitive calls) in 26.258 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001   12.223    0.000   12.223    0.000 {method 'readline' of 'file' objects}
+300000/100000    3.039    0.000    4.658    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:208(_deserialize_collection)
+800000/100000    2.801    0.000    3.873    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+        1    2.770    2.770   26.258   26.258 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+700000/100000    1.244    0.000    4.812    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+  1000000    0.917    0.000    0.917    0.000 {method 'encode' of 'unicode' objects}
+  1400137    0.502    0.000    0.502    0.000 {method 'find' of 'str' objects}
+   399864    0.451    0.000    1.141    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+   400000    0.362    0.000    1.515    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   100137    0.274    0.000    0.274    0.000 {method 'write' of 'file' objects}
+   100001    0.273    0.000   12.571    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+   400001    0.266    0.000    0.431    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+   100000    0.220    0.000    5.137    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+   399864    0.209    0.000    0.640    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+   400001    0.165    0.000    0.165    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+  1000002    0.110    0.000    0.110    0.000 {len}
+   400002    0.099    0.000    0.099    0.000 {method 'join' of 'str' objects}
+   100002    0.085    0.000    0.085    0.000 {method 'split' of 'str' objects}
+
+Fri Apr 26 12:14:28 2013    output/python_streaming_deep_map_data.profile
+
+         10708036 function calls (8908036 primitive calls) in 21.285 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   100001    6.084    0.000    6.084    0.000 {method 'readline' of 'file' objects}
+600000/100000    4.756    0.000    6.375    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:208(_deserialize_collection)
+800000/100000    2.679    0.000    3.503    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+        1    2.597    2.597   21.285   21.285 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+700000/100000    1.033    0.000    6.526    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+  2200137    0.679    0.000    0.679    0.000 {method 'find' of 'str' objects}
+   700000    0.638    0.000    0.638    0.000 {method 'encode' of 'unicode' objects}
+   399864    0.464    0.000    1.168    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+   400000    0.360    0.000    1.539    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   400001    0.270    0.000    0.436    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+   100137    0.267    0.000    0.268    0.000 {method 'write' of 'file' objects}
+   100001    0.256    0.000    6.413    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+   100000    0.217    0.000    6.847    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+   399864    0.211    0.000    0.647    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+   400001    0.166    0.000    0.166    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+  1300002    0.146    0.000    0.146    0.000 {len}
+   600000    0.103    0.000    0.103    0.000 {method 'iteritems' of 'dict' objects}
+   100002    0.084    0.000    0.084    0.000 {method 'split' of 'str' objects}
+
+Fri Apr 26 12:14:40 2013    output/python_streaming_embedded_tuple_data.profile
+
+         4757805 function calls (3707805 primitive calls) in 12.148 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    50001    5.649    0.000    5.649    0.000 {method 'readline' of 'file' objects}
+600000/50000    1.392    0.000    1.596    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+    50000    1.155    0.000    2.456    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:208(_deserialize_collection)
+550000/50000    1.096    0.000    2.544    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+        1    1.085    1.085   12.148   12.148 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+   199868    0.220    0.000    0.562    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+   500133    0.195    0.000    0.195    0.000 {method 'find' of 'str' objects}
+   200000    0.175    0.000    0.749    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   500272    0.171    0.000    0.171    0.000 {isinstance}
+    50001    0.133    0.000    5.819    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+   200001    0.133    0.000    0.212    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+    50133    0.130    0.000    0.131    0.000 {method 'write' of 'file' objects}
+    50000    0.110    0.000    2.710    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+   199868    0.103    0.000    0.315    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+   500011    0.094    0.000    0.094    0.000 {method 'append' of 'list' objects}
+   200001    0.079    0.000    0.079    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1310(getEffectiveLevel)
+   400002    0.048    0.000    0.048    0.000 {len}
+    50002    0.045    0.000    0.045    0.000 {method 'split' of 'str' objects}
+
+Fri Apr 26 12:14:57 2013    output/python_streaming_bag_data.profile
+
+         6507805 function calls (4307805 primitive calls) in 17.216 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    12501    7.683    0.001    7.683    0.001 {method 'readline' of 'file' objects}
+325000/12500    3.313    0.000    5.362    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:208(_deserialize_collection)
+962500/12500    2.359    0.000    2.962    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+950000/12500    1.474    0.000    5.391    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+        1    0.801    0.801   17.216   17.216 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+  1250133    0.429    0.000    0.429    0.000 {method 'find' of 'str' objects}
+   312500    0.304    0.000    0.304    0.000 {method 'encode' of 'unicode' objects}
+   625272    0.218    0.000    0.218    0.000 {isinstance}
+   937511    0.141    0.000    0.141    0.000 {method 'append' of 'list' objects}
+   337502    0.082    0.000    0.082    0.000 {method 'join' of 'str' objects}
+    49868    0.059    0.000    0.153    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+    50000    0.050    0.000    0.215    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+   412502    0.046    0.000    0.046    0.000 {len}
+    12501    0.043    0.000    7.737    0.001 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+    12633    0.040    0.000    0.040    0.000 {method 'write' of 'file' objects}
+    50001    0.037    0.000    0.058    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+    12500    0.028    0.000    5.444    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+    49868    0.028    0.000    0.086    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+
+Fri Apr 26 12:15:42 2013    output/python_streaming_bag_of_short_strings_data.profile
+
+         18507805 function calls (12207805 primitive calls) in 44.245 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    50001   17.500    0.000   17.500    0.000 {method 'readline' of 'file' objects}
+1300000/50000    8.945    0.000   13.799    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:208(_deserialize_collection)
+2600000/50000    6.692    0.000    8.618    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:264(serialize_output)
+2550000/50000    3.410    0.000   13.904    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:179(_deserialize_input)
+        1    2.818    2.818   44.245   44.245 /Users/jpacker/code/java-python-streaming/scripts/controller.py:47(main)
+  1250000    1.285    0.000    1.285    0.000 {method 'encode' of 'unicode' objects}
+  2500133    0.965    0.000    0.965    0.000 {method 'find' of 'str' objects}
+  2500011    0.453    0.000    0.453    0.000 {method 'append' of 'list' objects}
+  1250272    0.427    0.000    0.427    0.000 {isinstance}
+   199868    0.230    0.000    0.597    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1594(debug)
+  1350002    0.214    0.000    0.214    0.000 {method 'join' of 'str' objects}
+   200000    0.189    0.000    0.798    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:146(log_message)
+  1650002    0.175    0.000    0.175    0.000 {len}
+    50001    0.166    0.000   17.708    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:125(get_next_input)
+    50133    0.148    0.000    0.149    0.000 {method 'write' of 'file' objects}
+   200001    0.144    0.000    0.229    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1324(isEnabledFor)
+   199868    0.111    0.000    0.340    0.000 /System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/logging/__init__.py:1110(debug)
+    50000    0.108    0.000   14.089    0.000 /Users/jpacker/code/java-python-streaming/scripts/controller.py:173(deserialize_input)
+

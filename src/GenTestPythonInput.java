@@ -35,6 +35,7 @@ public class GenTestPythonInput {
         genDeepMapData();
         genEmbeddedTupleData();
         genBagData();
+        genBagOfShortStringsData();
     }
 
     private static void genNumberData() {
@@ -190,6 +191,24 @@ public class GenTestPythonInput {
                     t.set(0, UUID.randomUUID().toString().substring(0, 8));
                     t.set(1, new Integer(random.nextInt()));
                     bag.add(t);
+                }
+                fos.write(pigStreaming.serialize(tupleFactory.newTuple(bag), true, true));
+            }
+            writeEndOfStreamFlag(fos);
+        } catch (FileNotFoundException fnfe) {
+            System.out.println(fnfe.toString());
+        } catch (IOException ioe) {
+            System.out.println(ioe.toString());
+        }
+    }
+
+    private static void genBagOfShortStringsData() {
+        try {
+            FileOutputStream fos = getFreshFileOutputStream("data/bag_of_short_strings_data.txt");
+            for (int i = 0; i < numRecordsPerTestSet / 2; i++) {
+                DataBag bag = bagFactory.newDefaultBag();
+                for (int j = 0; j < 25; j++) {
+                    bag.add(tupleFactory.newTuple(UUID.randomUUID().toString().substring(0, 8)));
                 }
                 fos.write(pigStreaming.serialize(tupleFactory.newTuple(bag), true, true));
             }
